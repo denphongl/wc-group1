@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>⚽ WC 2026 — Prediction Pool</title>
+  <style>
+    :root {
+      --bg: #f5f5f5; --card: #ffffff; --card2: #f0f0f0; --border: #e0e0e0;
+      --text: #111111; --text2: #666666;
+      --green: #007a2e; --green-bg: rgba(0,122,46,.10); --green-txt: #006626;
+      --red-bg: rgba(204,0,0,.08); --red-txt: #cc0000;
+      --gold: #b07a00; --gold-bg: rgba(176,122,0,.10);
+      --espn: #cc0000;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue',Arial,sans-serif; font-size: 13px; }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--espn); padding: 14px 24px;
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 3px solid #aa0000;
+    }
+    .header-logo { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -1px; font-style: italic; }
+    .header-divider { width: 2px; height: 32px; background: rgba(255,255,255,.4); }
+    .header-title { font-size: 18px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: -.2px; }
+    .header-sub { font-size: 11px; color: rgba(255,255,255,.75); margin-top: 3px; }
+    .header-right { margin-left: auto; text-align: right; }
+    .header-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 3px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      background: #fff; color: var(--espn);
+    }
+    .header-date { font-size: 11px; color: rgba(255,255,255,.7); margin-top: 4px; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1340px; margin: 0 auto; padding: 20px 16px; }
+    .section { margin-bottom: 28px; }
+    .section-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 2px solid var(--espn);
+    }
+    .section-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
+    .section-badge {
+      font-size: 10px; background: var(--card2); color: var(--text2);
+      padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border);
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-top: 3px solid var(--espn);
+      border-radius: 4px; padding: 12px 16px; flex: 1; min-width: 130px;
+    }
+    .stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 4px; }
+    .stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    /* ── LEADERBOARD ── */
+    .lb-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
+    .lb-table { width: 100%; border-collapse: collapse; background: var(--card); white-space: nowrap; }
+    .lb-table thead { border-top: 3px solid var(--espn); }
+    .lb-table th {
+      background: var(--card2); padding: 9px 12px;
+      font-size: 10px; color: var(--text2); text-transform: uppercase;
+      letter-spacing: .4px; font-weight: 700;
+      border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .lb-table th.num, .lb-table td.num { text-align: right; }
+    .lb-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .lb-table tr:last-child td { border-bottom: none; }
+    .lb-table tr:hover td { background: #fafafa; }
+    .rank { font-size: 13px; font-weight: 800; min-width: 28px; display: inline-block; text-align: center; }
+    .rank-1 { color: #B8860B; } .rank-2 { color: #888; } .rank-3 { color: #CD7F32; }
+    .rank-other { color: var(--text2); font-weight: 400; }
+    .player-name { font-weight: 700; font-size: 13px; }
+    .score-total { font-weight: 800; font-size: 15px; color: var(--espn); }
+    .score-part { font-size: 11px; color: var(--text2); }
+    .champ-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+    .champ-alive  { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(176,122,0,.25); }
+    .champ-out    { background: var(--red-bg);  color: var(--red-txt); border: 1px solid rgba(204,0,0,.2); text-decoration: line-through; }
+    .champ-win    { background: rgba(0,122,46,.10); color: var(--green); border: 1px solid rgba(0,122,46,.2); }
+    .pbar { height: 5px; background: var(--card2); border-radius: 3px; width: 80px; display: inline-block; vertical-align: middle; }
+    .pbar-fill { height: 100%; border-radius: 3px; background: var(--espn); }
+
+    /* ── TABS ── */
+    .tabs { display: flex; border-bottom: 2px solid var(--border); }
+    .tab-btn {
+      padding: 9px 18px; border: none; background: none;
+      color: var(--text2); cursor: pointer; font-size: 13px; font-weight: 600;
+      border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color .15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--espn); border-bottom-color: var(--espn); }
+    .tab-pane { display: none; padding-top: 14px; }
+    .tab-pane.active { display: block; }
+
+    /* ── PICKS TABLE ── */
+    .picks-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
+    .picks-table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 11px; white-space: nowrap; }
+    .picks-table thead { border-top: 2px solid var(--espn); }
+    .picks-table th {
+      background: var(--card2); padding: 7px 10px; font-size: 10px; color: var(--text2);
+      text-align: center; border: 1px solid var(--border); font-weight: 700; letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+    .picks-table th.player-col { text-align: left; min-width: 90px; }
+    .picks-table th.score-col  { text-align: right; background: rgba(204,0,0,.05); color: var(--espn) !important; }
+    .picks-table td { padding: 7px 10px; text-align: center; border: 1px solid var(--border); }
+    .picks-table td.player-col {
+      text-align: left; background: var(--card2); font-weight: 700;
+      position: sticky; left: 0; z-index: 2;
+    }
+    .picks-table td.score-col { text-align: right; font-weight: 800; background: rgba(204,0,0,.05); color: var(--espn); }
+    .p-correct { background: var(--green-bg); color: var(--green-txt); font-weight: 600; }
+    .p-wrong   { background: var(--red-bg);   color: var(--red-txt); }
+    .p-pending { color: var(--text2); }
+
+    /* ── MISC ── */
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--text2); margin-top: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .ldot { width: 10px; height: 10px; border-radius: 2px; }
+    .ldot-correct { background: var(--green-bg); border: 1px solid var(--green); }
+    .ldot-wrong   { background: var(--red-bg);   border: 1px solid var(--espn); }
+    .ldot-pending { background: transparent; border: 1px solid var(--border); }
+    .notice {
+      background: var(--card); border: 1px solid var(--border);
+      border-left: 3px solid var(--espn); padding: 10px 14px;
+      border-radius: 4px; font-size: 12px; color: var(--text2); margin-top: 10px;
+    }
+    .progress-bar-wrap { display:flex; align-items:center; gap:6px; }
+
+    @media(max-width:640px) {
+      .header-logo { display: none; }
+      .header-divider { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* ================================================================
+   ✏️  ADMIN CONFIG — แก้ไขส่วนนี้เท่านั้นเมื่อมีผลการแข่งขันใหม่
+   ================================================================
+   วิธีใช้: เพิ่มชื่อทีมที่ผ่านเข้ารอบถัดไปลงใน array ของแต่ละรอบ
+   ⚠️  สะกดชื่อให้ตรงกับที่ผู้เล่นกรอก (เช่น 'Rep. of Korea' ไม่ใช่ 'South Korea')
+================================================================ */
+
+const RESULTS = {
+
+  /* รอบ 16 ทีม — ใส่ชื่อทีมที่ผ่าน R32 (สูงสุด 16 ทีม) */
+  r32: [
+    'Paraguay',   // ผ่าน 29 มิ.ย.
+    'Canada',     // ผ่าน 28 มิ.ย.
+    'Morocco',    // ผ่าน 29 มิ.ย.
+    'Brazil',     // ผ่าน 29 มิ.ย.
+  ],
+  /* ทีมที่ตกรอบ R32 — เพิ่มได้ทันทีเมื่อแมตช์จบ (จะแสดงสีแดงในตาราง) */
+  r32_out: [
+    'Germany',        // แพ้ Paraguay
+    'South Africa',   // แพ้ Canada
+    'Netherlands',    // แพ้ Morocco
+    'Japan',          // แพ้ Brazil
+  ],
+
+  /* รอบ QF (8 ทีม) — ใส่ทีมที่ผ่าน R16 (สูงสุด 8 ทีม) */
+  r16: [],
+  /* ทีมที่ตกรอบ R16 */
+  r16_out: [],
+
+  /* รอบ SF (4 ทีม) — ใส่ทีมที่ผ่าน QF (สูงสุด 4 ทีม) */
+  qf: [],
+  /* ทีมที่ตกรอบ QF */
+  qf_out: [],
+
+  /* รอบชิงชนะเลิศ */
+  final: {
+    fourth:   null,    // ← ทีมอันดับ 4
+    third:    null,    // ← ทีมอันดับ 3
+    second:   null,    // ← รองแชมป์
+    champion: null,    // ← ⭐ แชมป์โลก
+  },
+
+};
+
+/* ── กติกาคะแนน (ไม่ต้องแก้) ─────────────────────────────── */
+const SCORING = {
+  r32: 5, r16: 10, qf: 20,
+  final_4th: 20, final_3rd: 30, final_2nd: 40, final_champion: 50,
+  max: 444,
+};
+
+/* ================================================================
+   ข้อมูลผู้เล่น — ไม่ต้องแก้ไข
+   gs_score  = คะแนน Group Stage (admin คำนวณไว้แล้ว)
+   r32[0-15] = ทาย 16 ทีมที่จะผ่าน R32
+   r16[0-7]  = ทาย 8 ทีมที่จะผ่าน R16
+   qf[0-3]   = ทาย 4 ทีมที่จะผ่าน QF
+   final     = ทายอันดับชิง
+================================================================ */
+const PLAYERS = [
+  { name:'Chaidet1',  gs:58,
+    r32:['Germany','France','Rep. of Korea','Japan','Croatia','Spain','USA','Czech Rep.','Brazil','Ivory Coast','Mexico','England','Argentina','Paraguay','Switzerland','Portugal'],
+    r16:['Germany','Japan','Spain','USA','Brazil','England','Argentina','Portugal'],
+    qf:['Japan','Spain','England','Argentina'],
+    final:{fourth:'Spain',third:'Argentina',second:'England',champion:'Japan'} },
+  { name:'Chaidet2',  gs:58,
+    r32:['Germany','France','Rep. of Korea','Japan','Croatia','Spain','USA','Belgium','Brazil','Ivory Coast','Mexico','England','Argentina','Paraguay','Switzerland','Portugal'],
+    r16:['Germany','Japan','Spain','USA','Brazil','England','Argentina','Portugal'],
+    qf:['Japan','Spain','England','Argentina'],
+    final:{fourth:'Spain',third:'Argentina',second:'Japan',champion:'England'} },
+  { name:'den1',      gs:54,
+    r32:['Germany','France','Mexico','Japan','Colombia','Spain','USA','Belgium','Brazil','Senegal','Czech Rep.','England','Argentina','Paraguay','Algeria','Portugal'],
+    r16:['Germany','Japan','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['Germany','Spain','England','Argentina'],
+    final:{fourth:'Germany',third:'England',second:'Argentina',champion:'Spain'} },
+  { name:'den2',      gs:54,
+    r32:['Germany','France','Rep. of Korea','Netherlands','Croatia','Spain','USA','Belgium','Brazil','Norway','Mexico','England','Argentina','IR Iran','Switzerland','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Argentina'],
+    final:{fourth:'Spain',third:'Argentina',second:'England',champion:'France'} },
+  { name:'Min',       gs:50,
+    r32:['Germany','France','Czech Rep.','Netherlands','Colombia','Spain','USA','Belgium','Brazil','Norway','Mexico','England','Argentina','Paraguay','Switzerland','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','Brazil','Argentina'],
+    final:{fourth:'Argentina',third:'Spain',second:'Brazil',champion:'France'} },
+  { name:'Ratapong1', gs:54,
+    r32:['Germany','France','Czech Rep.','Netherlands','Colombia','Spain','Ivory Coast','Belgium','Brazil','Norway','Rep. of Korea','England','Argentina','Egypt','Switzerland','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Portugal'],
+    final:{fourth:'France',third:'Portugal',second:'England',champion:'Spain'} },
+  { name:'Ratapong2', gs:54,
+    r32:['Germany','France','Czech Rep.','Netherlands','Colombia','Spain','Ivory Coast','Belgium','Brazil','Norway','Rep. of Korea','England','Argentina','Egypt','Switzerland','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','Brazil','Portugal'],
+    final:{fourth:'France',third:'Portugal',second:'Spain',champion:'Brazil'} },
+  { name:'Arsom1',    gs:58,
+    r32:['Germany','France','Switzerland','Netherlands','Croatia','Spain','USA','Belgium','Brazil','Norway','Mexico','England','Argentina','Turkey','Canada','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Argentina'],
+    final:{fourth:'Spain',third:'England',second:'France',champion:'Argentina'} },
+  { name:'Arsom2',    gs:54,
+    r32:['Germany','France','Canada','Netherlands','Colombia','Spain','USA','Belgium','Brazil','Norway','Mexico','England','Argentina','Paraguay','Switzerland','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Argentina'],
+    final:{fourth:'Spain',third:'Argentina',second:'France',champion:'England'} },
+  { name:'Cholawit1', gs:52,
+    r32:['Germany','France','Mexico','Japan','Colombia','Spain','USA','Egypt','Brazil','Ivory Coast','Czech Rep.','England','Argentina','Belgium','Norway','Portugal'],
+    r16:['France','Japan','Spain','USA','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','Brazil','Portugal'],
+    final:{fourth:'Brazil',third:'Spain',second:'Portugal',champion:'France'} },
+  { name:'Cholawit2', gs:52,
+    r32:['Germany','France','Mexico','Japan','Colombia','Spain','USA','Egypt','Brazil','Ivory Coast','Czech Rep.','England','Argentina','Belgium','Norway','Portugal'],
+    r16:['France','Japan','Spain','USA','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','Brazil','Portugal'],
+    final:{fourth:'Brazil',third:'France',second:'Portugal',champion:'Spain'} },
+  { name:'Direk',     gs:52,
+    r32:['Germany','France','Canada','Japan','Croatia','Spain','USA','Belgium','Brazil','Norway','Mexico','England','Argentina','Egypt','Switzerland','Portugal'],
+    r16:['France','Japan','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Argentina'],
+    final:{fourth:'France',third:'Argentina',second:'England',champion:'Spain'} },
+  { name:'Patrawut1', gs:52,
+    r32:['Germany','France','Bosnia/Herzeg.','Japan','Ghana','Spain','Australia','Belgium','Brazil','Norway','Mexico','England','Argentina','USA','Switzerland','Portugal'],
+    r16:['France','Japan','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Portugal'],
+    final:{fourth:'France',third:'Portugal',second:'England',champion:'Spain'} },
+  { name:'Patrawut2', gs:54,
+    r32:['Germany','France','Rep. of Korea','Netherlands','Croatia','Spain','Australia','Belgium','Brazil','Norway','Mexico','England','Argentina','IR Iran','Switzerland','Portugal'],
+    r16:['France','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Argentina'],
+    final:{fourth:'Argentina',third:'France',second:'Spain',champion:'England'} },
+  { name:'Permlarp1', gs:46,
+    r32:['Germany','France','Czech Rep.','Netherlands','England','Spain','Ivory Coast','Belgium','Brazil','Ecuador','Mexico','Croatia','Argentina','USA','New Zealand','Portugal'],
+    r16:['Germany','Netherlands','Spain','Belgium','Brazil','Mexico','Argentina','Portugal'],
+    qf:['Germany','Spain','Brazil','Argentina'],
+    final:{fourth:'Argentina',third:'Spain',second:'Brazil',champion:'Germany'} },
+  { name:'Permlarp2', gs:48,
+    r32:['Germany','France','Czech Rep.','Netherlands','Croatia','Spain','USA','Belgium','Brazil','Ecuador','Mexico','England','Argentina','Paraguay','Canada','Portugal'],
+    r16:['Germany','Netherlands','Spain','Belgium','Brazil','England','Argentina','Portugal'],
+    qf:['Germany','Spain','England','Portugal'],
+    final:{fourth:'Portugal',third:'Germany',second:'Spain',champion:'England'} },
+  { name:'Som',       gs:56,
+    r32:['Germany','France','Rep. of Korea','Morocco','Croatia','Spain','USA','Belgium','Brazil','Ecuador','Mexico','England','Argentina','Turkey','Switzerland','Portugal'],
+    r16:['France','Morocco','Spain','USA','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Portugal'],
+    final:{fourth:'France',third:'England',second:'Portugal',champion:'Spain'} },
+  { name:'Niti',      gs:54,
+    r32:['Germany','France','Canada','Netherlands','Croatia','Uruguay','USA','Belgium','Brazil','Senegal','Mexico','England','Argentina','Turkey','Switzerland','Portugal'],
+    r16:['Germany','Netherlands','Uruguay','USA','Brazil','English','Argentina','Portugal'],
+    qf:['Germany','USA','Brazil','Argentina'],
+    final:{fourth:'USA',third:'Argentina',second:'Germany',champion:'Brazil'} },
+  { name:'Chaikrit1', gs:56,
+    r32:['Germany','France','Czech Rep.','Japan','Croatia','Spain','USA','Rep. of Korea','Brazil','Norway','Mexico','England','Argentina','IR Iran','Switzerland','Portugal'],
+    r16:['France','Japan','Spain','Rep. of Korea','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','Brazil','Argentina'],
+    final:{fourth:'Brazil',third:'France',second:'Argentina',champion:'Spain'} },
+  { name:'Chaikrit2', gs:56,
+    r32:['Germany','France','Czech Rep.','Japan','Croatia','Spain','USA','Rep. of Korea','Brazil','Norway','Mexico','England','Argentina','IR Iran','Switzerland','Portugal'],
+    r16:['France','Japan','Spain','Rep. of Korea','Brazil','England','Argentina','Portugal'],
+    qf:['France','Spain','England','Argentina'],
+    final:{fourth:'Argentina',third:'Spain',second:'England',champion:'France'} },
+  { name:'Chaikrit3', gs:56,
+    r32:['Germany','France','Czech Rep.','Japan','Croatia','Spain','USA','Rep. of Korea','Brazil','Norway','Mexico','England','Argentina','IR Iran','Switzerland','Portugal'],
+    r16:['Germany','Japan','Spain','Rep. of Korea','Brazil','England','Argentina','Portugal'],
+    qf:['Germany','Spain','England','Argentina'],
+    final:{fourth:'Argentina',third:'Spain',second:'England',champion:'Germany'} },
+  { name:'Ratchapruk',gs:56,
+    r32:['Germany','France','Canada','Japan','Croatia','Spain','USA','Belgium','Brazil','Norway','Morocco','England','Argentina','Paraguay','Ecuador','Portugal'],
+    r16:['France','Japan','Spain','Belgium','Brazil','Morocco','Argentina','Portugal'],
+    qf:['France','Spain','Brazil','Portugal'],
+    final:{fourth:'France',third:'Brazil',second:'Portugal',champion:'Spain'} },
+];
+
+/* ================================================================
+   SCORING ENGINE
+================================================================ */
+function calcScores(p) {
+  const S32 = new Set(RESULTS.r32);
+  const S16 = new Set(RESULTS.r16);
+  const SQF = new Set(RESULTS.qf);
+
+  const r32 = p.r32.reduce((n,t) => n + (S32.has(t) ? SCORING.r32 : 0), 0);
+  const r16 = p.r16.reduce((n,t) => n + (S16.has(t) ? SCORING.r16 : 0), 0);
+  const qf  = p.qf .reduce((n,t) => n + (SQF.has(t) ? SCORING.qf  : 0), 0);
+
+  let fin = 0;
+  const F = RESULTS.final;
+  if (F.fourth   && p.final.fourth   === F.fourth)   fin += SCORING.final_4th;
+  if (F.third    && p.final.third    === F.third)     fin += SCORING.final_3rd;
+  if (F.second   && p.final.second   === F.second)    fin += SCORING.final_2nd;
+  if (F.champion && p.final.champion === F.champion)  fin += SCORING.final_champion;
+
+  return { gs: p.gs, r32, r16, qf, final: fin, total: p.gs + r32 + r16 + qf + fin };
+}
+
+/* ── อันดับที่ของทีมที่ผู้เล่นทายแชมป์ ── */
+function champStatus(team) {
+  const F = RESULTS.final;
+  if (F.champion === team) return 'win';
+
+  const S32out = new Set(RESULTS.r32_out);
+  const S16out = new Set(RESULTS.r16_out);
+  const SQFout = new Set(RESULTS.qf_out);
+
+  if (S32out.has(team) || S16out.has(team) || SQFout.has(team)) return 'out';
+  return 'alive';
+}
+
+/* ── สีของ pick ในตาราง ── */
+function pickColor(team, advSet, outSet) {
+  if (advSet.has(team)) return 'p-correct';
+  if (outSet.has(team)) return 'p-wrong';
+  return 'p-pending';
+}
+
+/* ── จัดอันดับ ── */
+function ranked() {
+  const list = PLAYERS.map(p => ({ ...p, scores: calcScores(p) }));
+  list.sort((a,b) => b.scores.total - a.scores.total);
+  let rank = 1;
+  for (let i = 0; i < list.length; i++) {
+    if (i > 0 && list[i].scores.total < list[i-1].scores.total) rank = i + 1;
+    list[i].rank = rank;
+  }
+  return list;
+}
+
+/* ================================================================
+   RENDER
+================================================================ */
+function render() {
+  const players = ranked();
+  const leader  = players[0];
+  const today   = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const r32done = RESULTS.r32.length;
+  const r16done = RESULTS.r16.length;
+  const qfdone  = RESULTS.qf.length;
+
+  document.getElementById('app').innerHTML = `
+  <header class="header">
+    <div class="header-logo">ESPN</div>
+    <div class="header-divider"></div>
+    <div>
+      <div class="header-title">⚽ FIFA World Cup 2026 — Prediction Pool</div>
+      <div class="header-sub">${PLAYERS.length} ผู้เล่น · คะแนนเต็ม ${SCORING.max} pts</div>
+    </div>
+    <div class="header-right">
+      <div class="header-badge">LIVE SCORING</div>
+      <div class="header-date">อัพเดท: ${today}</div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">ผู้นำตาราง</div>
+        <div class="stat-value" style="font-size:17px">${leader.name}</div>
+        <div class="stat-sub">${leader.scores.total} pts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ผ่าน R32 แล้ว</div>
+        <div class="stat-value">${r32done}<span style="font-size:14px;color:var(--text2)">/16</span></div>
+        <div class="stat-sub">เหลือ ${16-r32done} ทีม</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ผ่าน R16 แล้ว</div>
+        <div class="stat-value">${r16done}<span style="font-size:14px;color:var(--text2)">/8</span></div>
+        <div class="stat-sub">${r16done===0?'ยังไม่เริ่ม':'เหลือ '+(8-r16done)+' ทีม'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ผ่าน QF แล้ว</div>
+        <div class="stat-value">${qfdone}<span style="font-size:14px;color:var(--text2)">/4</span></div>
+        <div class="stat-sub">${qfdone===0?'ยังไม่เริ่ม':'เหลือ '+(4-qfdone)+' ทีม'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">คะแนนสูงสุดปัจจุบัน</div>
+        <div class="stat-value">${leader.scores.total}</div>
+        <div class="stat-sub">จากเต็ม ${SCORING.max} pts</div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">🏆 ตารางคะแนน</span>
+        <span class="section-badge">อัพเดทอัตโนมัติ</span>
+      </div>
+      <div class="lb-wrap">
+        <table class="lb-table">
+          <thead><tr>
+            <th style="width:40px">#</th>
+            <th>ผู้เล่น</th>
+            <th class="num">GS<br/><small style="font-weight:400">รอบแบ่งกลุ่ม</small></th>
+            <th class="num">R32<br/><small style="font-weight:400">5pt/ทีม</small></th>
+            <th class="num">R16<br/><small style="font-weight:400">10pt/ทีม</small></th>
+            <th class="num">QF<br/><small style="font-weight:400">20pt/ทีม</small></th>
+            <th class="num">Final<br/><small style="font-weight:400">max 140pt</small></th>
+            <th class="num" style="color:var(--espn)">รวม</th>
+            <th>ทายแชมป์</th>
+            <th>Progress</th>
+          </tr></thead>
+          <tbody>
+            ${players.map(p => {
+              const s = p.scores;
+              const rCls = p.rank<=3 ? `rank-${p.rank}` : 'rank-other';
+              const rIcon = p.rank===1?'🥇':p.rank===2?'🥈':p.rank===3?'🥉':'';
+              const cs = champStatus(p.final.champion);
+              const champCls = cs==='win'?'champ-win':cs==='out'?'champ-out':'champ-alive';
+              const champSuffix = cs==='win'?' 🏆':cs==='out'?' ✗':'';
+              const pct = Math.round(s.total/SCORING.max*100);
+              return `<tr>
+                <td><span class="rank ${rCls}">${rIcon||p.rank}</span></td>
+                <td><span class="player-name">${p.name}</span></td>
+                <td class="num score-part">${s.gs}</td>
+                <td class="num score-part">${s.r32}</td>
+                <td class="num score-part">${s.r16}</td>
+                <td class="num score-part">${s.qf}</td>
+                <td class="num score-part">${s.final}</td>
+                <td class="num"><span class="score-total">${s.total}</span></td>
+                <td><span class="champ-tag ${champCls}">${p.final.champion}${champSuffix}</span></td>
+                <td>
+                  <div class="progress-bar-wrap">
+                    <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+                    <span style="font-size:10px;color:var(--text2)">${pct}%</span>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PICKS DETAIL TABS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">📋 รายละเอียดการทาย</span>
+        <span class="section-badge">แยกตามรอบ</span>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('r32',this)">R32 — รอบ 16 ทีม</button>
+        <button class="tab-btn" onclick="switchTab('r16',this)">R16 — รอบ 8 ทีม</button>
+        <button class="tab-btn" onclick="switchTab('qf',this)">QF — รอบรองฯ</button>
+        <button class="tab-btn" onclick="switchTab('final',this)">Final — ชิงชนะเลิศ</button>
+      </div>
+
+      <div id="tab-r32" class="tab-pane active">${buildPicksTable(players,'r32',16,5)}</div>
+      <div id="tab-r16" class="tab-pane">${buildPicksTable(players,'r16',8,10)}</div>
+      <div id="tab-qf"  class="tab-pane">${buildPicksTable(players,'qf',4,20)}</div>
+      <div id="tab-final" class="tab-pane">${buildFinalTable(players)}</div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="ldot ldot-correct"></div> ทีมผ่านรอบ ✓</div>
+      <div class="legend-item"><div class="ldot ldot-wrong"></div> ทีมไม่ผ่าน ✗</div>
+      <div class="legend-item"><div class="ldot ldot-pending"></div> ยังไม่มีผล</div>
+    </div>
+
+    <div style="text-align:center;color:var(--text2);font-size:11px;padding:24px 0 8px">
+      FIFA World Cup 2026 · Office Prediction Pool · คะแนนเต็ม ${SCORING.max} pts
+    </div>
+  </div>
+  `;
+}
+
+/* ── Build picks table (r32 / r16 / qf) ── */
+function buildPicksTable(players, round, maxTeams, pts) {
+  const advSet = new Set(RESULTS[round]);
+  const outSet = new Set(RESULTS[round + '_out']);
+  const n = players[0][round].length;
+  const doneCount = advSet.size + outSet.size;
+  const roundComplete = advSet.size === maxTeams;
+
+  // column headers: number + most popular pick
+  const colCounts = Array.from({length:n}, (_,i) => {
+    const cnt = {};
+    players.forEach(p => { const t=p[round][i]; cnt[t]=(cnt[t]||0)+1; });
+    const top = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    return top ? top[0] : '?';
+  });
+
+  const thead = `<thead><tr>
+    <th class="player-col">ผู้เล่น</th>
+    ${colCounts.map((lbl,i) => {
+      const won = advSet.has(lbl);
+      return `<th title="Slot ${i+1}" style="${won?'color:var(--green)!important':''}">${i+1}<br/><small style="font-weight:400;font-size:9px">${lbl}</small></th>`;
+    }).join('')}
+    <th class="score-col">คะแนน<br/><small style="font-size:9px">${pts}pt×</small></th>
+  </tr></thead>`;
+
+  const tbody = players.map(p => {
+    let earned = 0;
+    const cells = p[round].map(team => {
+      const cls = pickColor(team, advSet, outSet);
+      if (cls === 'p-correct') earned += pts;
+      return `<td class="${cls}">${team}</td>`;
+    }).join('');
+    return `<tr><td class="player-col">${p.name}</td>${cells}<td class="score-col">${earned}</td></tr>`;
+  }).join('');
+
+  const matchesPlayed = Math.max(advSet.size, outSet.size > 0 ? outSet.size : 0);
+  const totalPlayed   = advSet.size; // teams advanced = matches played
+  const statusLine = roundComplete
+    ? `<span style="color:var(--green);font-weight:600">✓ รอบนี้จบแล้ว — ${maxTeams} ทีมผ่าน</span>`
+    : `<span style="color:var(--text2)">ผ่านแล้ว ${advSet.size}/${maxTeams} ทีม · ตกรอบ ${outSet.size} ทีม</span>`;
+
+  return `
+    <div style="font-size:11px;margin-bottom:8px">${statusLine}</div>
+    <div class="picks-wrap">
+      <table class="picks-table">${thead}<tbody>${tbody}</tbody></table>
+    </div>
+    <div class="legend" style="margin-top:8px">
+      <div class="legend-item"><div class="ldot ldot-correct"></div> ผ่านรอบ (+${pts} pts)</div>
+      <div class="legend-item"><div class="ldot ldot-wrong"></div> ตกรอบ</div>
+      <div class="legend-item"><div class="ldot ldot-pending"></div> รอผล</div>
+    </div>`;
+}
+
+/* ── Build final table ── */
+function buildFinalTable(players) {
+  const keys = ['fourth','third','second','champion'];
+  const labels = ['อันดับ 4','อันดับ 3','รองแชมป์','🏆 แชมป์'];
+  const bonus  = [SCORING.final_4th, SCORING.final_3rd, SCORING.final_2nd, SCORING.final_champion];
+  const F = RESULTS.final;
+
+  const thead = `<thead><tr>
+    <th class="player-col">ผู้เล่น</th>
+    ${labels.map((lbl,i) => {
+      const w = F[keys[i]];
+      return `<th>${lbl}<br/><small style="font-weight:400;font-size:9px">${w?'✅ '+w:'รอผล'}</small><br/><small style="font-size:9px;color:var(--gold)">(+${bonus[i]}pt)</small></th>`;
+    }).join('')}
+    <th class="score-col">โบนัส</th>
+  </tr></thead>`;
+
+  const tbody = players.map(p => {
+    let earned = 0;
+    const cells = keys.map((k,i) => {
+      const pick   = p.final[k] || '—';
+      const winner = F[k];
+      const cs     = champStatus(pick);
+      const isDead = (k === 'champion') && cs === 'out';
+      if (!winner) {
+        return `<td class="p-pending">${isDead?`<span style="text-decoration:line-through;color:var(--red-txt)">${pick}</span>`:pick}</td>`;
+      }
+      const ok = pick === winner;
+      if (ok) earned += bonus[i];
+      return `<td class="${ok?'p-correct':'p-wrong'}">${pick}</td>`;
+    }).join('');
+    return `<tr><td class="player-col">${p.name}</td>${cells}<td class="score-col">${earned}</td></tr>`;
+  }).join('');
+
+  return `<div class="picks-wrap"><table class="picks-table">${thead}<tbody>${tbody}</tbody></table></div>
+  <div class="legend" style="margin-top:8px">
+    <div class="legend-item"><div class="ldot ldot-correct"></div> ถูก</div>
+    <div class="legend-item"><div class="ldot ldot-wrong"></div> ผิด</div>
+    <div class="legend-item"><div class="ldot ldot-pending"></div> รอผล</div>
+    <div class="legend-item" style="color:var(--red-txt)">ขีดทับ = ทีมตกรอบแล้ว</div>
+  </div>`;
+}
+
+/* ── Tab switch ── */
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+render();
+</script>
+</body>
+</html>
